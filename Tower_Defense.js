@@ -10,7 +10,6 @@ const enemy = "e";
 const path = "p";
 const base = "b";
 const projectile = "j";
-const player = "P"; // Adding player for tower placement
 
 setLegend(
   [tower, bitmap`
@@ -34,16 +33,16 @@ setLegend(
 ................
 ................
 ................
-....111111......
-...11....11.....
-...1.33.3.1.....
-...1.33.33.1....
-...1.......1....
-...1..3....1....
-...11.33...1....
-....1..333.1....
-....11....11....
-.....111111.....
+................
+................
+.....LLLLLL.....
+.....LLLLLL.....
+.....LLLLLL.....
+.....LLLLLL.....
+.....LLLLLL.....
+.....LLLLLL.....
+................
+................
 ................
 ................
 ................`],
@@ -97,23 +96,6 @@ DDDDDDDDDDDDDDD4`],
 ......86HHCCC88.
 ......88666888..
 ................
-................`],
-  [player, bitmap`
-................
-................
-................
-.......0........
-.....00.000.....
-....0.....00....
-....0.0.0..0....
-....0......0....
-....0......0....
-....00....0.....
-......00000.....
-......0...0.....
-....000...000...
-................
-................
 ................`]
 );
 
@@ -144,47 +126,113 @@ setMap(currentLevel);
 
 setSolids([tower, path, base]);
 
-setPushables({
-  [player]: []
-});
+// Define the path
+const pathCoordinates = [
+  {x: 0, y: 7}, {x: 1, y: 7}, {x: 2, y: 7}, {x: 3, y: 7},
+  {x: 3, y: 6}, {x: 3, y: 5}, {x: 3, y: 4}, {x: 3, y: 3},
+  {x: 3, y: 2}, {x: 4, y: 2}, {x: 5, y: 2}, {x: 6, y: 2},
+  {x: 6, y: 3}, {x: 6, y: 4}, {x: 6, y: 5}, {x: 6, y: 6},
+  {x: 6, y: 7}, {x: 6, y: 8}, {x: 6, y: 9}, {x: 6, y: 10},
+  {x: 5, y: 10}, {x: 4, y: 10}, {x: 3, y: 10}, {x: 3, y: 11},
+  {x: 3, y: 12}, {x: 3, y: 13}, {x: 3, y: 13}, {x: 3, y: 9}, 
+  {x: 4, y: 13}, {x: 5, y: 13}, {x: 6, y: 13}, {x: 7, y: 13},   
+  {x: 8, y: 13}, {x: 9, y: 13}, {x: 10, y: 13}, {x: 11, y: 13}, 
+  {x: 12, y: 7}, {x: 13, y: 7}, {x: 13, y: 6}, {x: 7, y: 7},  
+];
 
-onInput("w", () => {
-  const p = getFirst(player);
-  if (p) p.y -= 1; // Move up
-});
+// Enemy Waves
+let wave = 0;
+let enemyCount = 5;
 
-onInput("a", () => {
-  const p = getFirst(player);
-  if (p) p.x -= 1; // Move left
-});
+function spawnEnemies() {
+  for (let i = 0; i < enemyCount; i++) {
+    addSprite(0, 7, enemy); // Spawn enemies at the start of the path
+  }
+  wave++;
+  enemyCount += 2; // Increase enemy count for the next wave
+}
 
-onInput("s", () => {
-  const p = getFirst(player);
-  if (p) p.y += 1; // Move down
-});
-
-onInput("d", () => {
-  const p = getFirst(player);
-  if (p) p.x += 1; // Move right
-});
-
-// Enemy Movement
 setInterval(() => {
+  spawnEnemies();
+}, 10000); // Spawn a new wave every 10 seconds
+
+// Move Enemies Along the Path
+function moveEnemies() {
   getAll(enemy).forEach(e => {
-    e.x += 1;
-    if (e.x >= 15) e.x = 0; // Loop enemy movement
+    const currentPos = { x: e.x, y: e.y };
+    const nextPosIndex = pathCoordinates.findIndex(pos => pos.x === currentPos.x && pos.y === currentPos.y) + 1;
+    if (nextPosIndex < pathCoordinates.length) {
+      const nextPos = pathCoordinates[nextPosIndex];
+      e.x = nextPos.x;
+      e.y = nextPos.y;
+    } else {
+      e.remove(); // Remove enemy if it reaches the end of the path
+    }
   });
-}, 500);
+}
+
+setInterval(() => {
+  moveEnemies();
+}, 500); // Move enemies every 500ms
 
 // Tower Placement
 let resources = 100; // Starting resources
-const towerCost = 20;
+const towerCost = 20; // Cost of each tower
 
 onInput("i", () => {
-  const p = getFirst(player);
-  if (p && resources >= towerCost && getTile(p.x, p.y).every(t => t.type !== tower)) {
+  const p = getFirst(tower);
+  if (resources >= towerCost && getTile(p.x, p.y).every(t => t.type !== tower)) {
     addSprite(p.x, p.y, tower);
     resources -= towerCost;
     addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+  }
+});
+
+// Tower Attacks
+setInterval(() => {
+  getAll(tower).forEach(t => {
+    const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
+    if (enemiesInRange.length > 0) {
+      const target = enemiesInRange[0];
+      addSprite(t.x, t.y, projectile);
+      setTimeout(() => {
+        getTile(target.x, target.y).forEach(t => {
+          if (t.type === projectile) t.remove();
+        });
+      }, 500);
+    }
+  });
+}, 1000);
+
+// Enemy Health and Damage
+let enemyHealth = 3;
+
+afterInput(() => {
+  getAll(projectile).forEach(p => {
+    const enemiesHit = getTile(p.x, p.y).filter(t => t.type === enemy);
+    enemiesHit.forEach(e => {
+      enemyHealth -= 1;
+      if (enemyHealth <= 0) {
+        e.remove();
+        enemyHealth = 3; // Reset health for next enemy
+      }
+    });
+  });
+});
+
+// Game Mechanics
+function gameOver() {
+  addText('Game Over', { x: 5, y: 7, color: color`2` });
+  setTimeout(() => {
+    level = 0;
+    resources = 100;
+    setMap(levels[level]);
+  }, 3000); // Restart game after 3 seconds
+}
+
+afterInput(() => {
+  const enemiesAtBase = getTile(14, 14).filter(t => t.type === enemy);
+  if (enemiesAtBase.length > 0) {
+    gameOver();
   }
 });
