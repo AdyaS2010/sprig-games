@@ -221,7 +221,7 @@ const pathCoordinates = [
 ];
 
 // Set inputs
-onInput("u", () => {
+onInput("i", () => {
   const t = getFirst(tower);
   if (resources >= upgradeCost && t) {
     t.range += 1; // Increase tower range
@@ -337,17 +337,47 @@ setInterval(() => {
   });
 }, 1000);
 
+// Special Ability: Boost Attack Speed
+const boostCooldown = 20000; // 20 seconds cooldown
+let boostActive = false;
+
+onInput("k", () => {
+  if (!boostActive) {
+    boostActive = true;
+    setInterval(() => {
+      getAll(tower).forEach(t => {
+        const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
+        if (enemiesInRange.length > 0) {
+          const target = enemiesInRange[0];
+          addSprite(t.x, t.y, projectile);
+          setTimeout(() => {
+            getTile(target.x, target.y).forEach(t => {
+              if (t.type === projectile) t.remove();
+            });
+          }, 500); // Faster attack speed
+        }
+      });
+    }, 1000); // Boost lasts for 10 seconds
+
+    setTimeout(() => {
+      boostActive = false;
+    }, boostCooldown); // Reset cooldown
+  }
+});
+
 // Enemy Health and Damage
 let enemyHealth = 3;
 
 afterInput(() => {
   getAll(projectile).forEach(p => {
-    const enemiesHit = getTile(p.x, p.y).filter(t => t.type === enemy);
+    const enemiesHit = getTile(p.x, p.y).filter(t => t.type === enemy || t.type === fastEnemy || t.type === armoredEnemy);
     enemiesHit.forEach(e => {
       enemyHealth -= 1;
       if (enemyHealth <= 0) {
         e.remove();
         enemyHealth = 3; // Reset health for next enemy
+        resources += 10; // Earn resources for defeating an enemy
+        addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
       }
     });
   });
