@@ -134,10 +134,13 @@ const pathCoordinates = [
   {x: 6, y: 3}, {x: 6, y: 4}, {x: 6, y: 5}, {x: 6, y: 6},
   {x: 6, y: 7}, {x: 6, y: 8}, {x: 6, y: 9}, {x: 6, y: 10},
   {x: 5, y: 10}, {x: 4, y: 10}, {x: 3, y: 10}, {x: 3, y: 11},
-  {x: 3, y: 12}, {x: 3, y: 13}, {x: 3, y: 13}, {x: 3, y: 9}, 
-  {x: 4, y: 13}, {x: 5, y: 13}, {x: 6, y: 13}, {x: 7, y: 13},   
-  {x: 8, y: 13}, {x: 9, y: 13}, {x: 10, y: 13}, {x: 11, y: 13}, 
-  {x: 12, y: 7}, {x: 13, y: 7}, {x: 13, y: 6}, {x: 7, y: 7},  
+  {x: 3, y: 12}, {x: 3, y: 13}, {x: 4, y: 13}, {x: 5, y: 13}, 
+  {x: 6, y: 13}, {x: 7, y: 13}, {x: 8, y: 13}, {x: 9, y: 13},   
+  {x: 10, y: 13}, {x: 11, y: 13}, {x: 12, y: 13}, {x: 13, y: 13}, 
+  {x: 13, y: 12}, {x: 13, y: 11}, {x: 13, y: 10}, {x: 13, y: 9},  
+  {x: 13, y: 8}, {x: 12, y: 8}, {x: 11, y: 8}, {x: 11, y: 7},
+  {x: 11, y: 6}, {x: 11, y: 5}, {x: 11, y: 4}, {x: 11, y: 3},
+  {x: 12, y: 3}, {x: 13, y: 3}, {x: 14, y: 3}, {x: 15, y: 3} 
 ];
 
 // Enemy Waves
@@ -152,9 +155,25 @@ function spawnEnemies() {
   enemyCount += 2; // Increase enemy count for the next wave
 }
 
+// Adjust intervals for performance optimization
 setInterval(() => {
-  spawnEnemies();
-}, 10000); // Spawn a new wave every 10 seconds
+  moveEnemies();
+}, 1000); // Move enemies every 1000ms
+
+setInterval(() => {
+  getAll(tower).forEach(t => {
+    const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
+    if (enemiesInRange.length > 0) {
+      const target = enemiesInRange[0];
+      addSprite(t.x, t.y, projectile);
+      setTimeout(() => {
+        getTile(target.x, target.y).forEach(t => {
+          if (t.type === projectile) t.remove();
+        });
+      }, 1000); // Increase delay for projectile removal
+    }
+  });
+}, 2000); // Increase interval for tower attacks
 
 // Move Enemies Along the Path
 function moveEnemies() {
