@@ -404,6 +404,37 @@ afterInput(() => {
   });
 });
 
+// Achievements
+let achievements = {
+  firstTower: false,
+  firstKill: false,
+  wave10: false
+};
+
+function checkAchievements() {
+  if (!achievements.firstTower && getAll(tower).length > 0) {
+    achievements.firstTower = true;
+    resources += 50; // Reward for placing the first tower
+    addText('Achievement: First Tower!', { x: 1, y: 3, color: color`2` });
+  }
+
+  if (!achievements.firstKill && getAll(enemy).length === 0) {
+    achievements.firstKill = true;
+    resources += 50; // Reward for first kill
+    addText('Achievement: First Kill!', { x: 1, y: 4, color: color`2` });
+  }
+
+  if (!achievements.wave10 && wave >= 10) {
+    achievements.wave10 = true;
+    resources += 100; // Reward for reaching wave 10
+    addText('Achievement: Wave 10!', { x: 1, y: 5, color: color`2` });
+  }
+}
+
+setInterval(() => {
+  checkAchievements();
+}, 1000); // Check achievements every second
+
 // Sound Effects
 const placeTowerSound = new Audio('place_tower.mp3');
 const attackSound = new Audio('attack.mp3');
