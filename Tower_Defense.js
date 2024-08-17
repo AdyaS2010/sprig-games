@@ -190,11 +190,66 @@ bbbpbbbbbbbbbpbb
 bbbpbbbbbbbbbpbb
 bbbpppppppppppbb
 bbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbb`,
+  map`
+bbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbb
+bbbppppbbbbbbbbb
+bbbpbbpbbbbppppp
+bbbpbbpbbbbpbbbb
+bbbpbbpbbbbpbbbb
+bbbpbbpbbbbpbbbb
+ppppbbpbbbbpbbbb
+bbbbbbpbbbbpppbb
+bbbbbbpbbbbbbpbb
+bbbppppbbbbbbpbb
+bbbpbbbbbbbbbpbb
+bbbpbbbbbbbbbpbb
+bbbpppppppppppbb
+bbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbb`,
+  map`
+bbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbb
+bbbppppbbbbbbbbb
+bbbpbbpbbbbppppp
+bbbpbbpbbbbpbbbb
+bbbpbbpbbbbpbbbb
+bbbpbbpbbbbpbbbb
+ppppbbpbbbbpbbbb
+bbbbbbpbbbbpppbb
+bbbbbbpbbbbbbpbb
+bbbppppbbbbbbpbb
+bbbpbbbbbbbbbpbb
+bbbpbbbbbbbbbpbb
+bbbpppppppppppbb
+bbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbb`
 ];
 
+let currentLevel = 0;
+
 const currentLevel = levels[level];
 setMap(currentLevel);
+
+function loadLevel(level) {
+  setMap(levels[level]);
+  wave = 0;
+  enemyCount = 5;
+  resources = 100;
+  addText(`Level: ${level + 1}`, { x: 1, y: 1, color: color`3` });
+}
+
+function nextLevel() {
+  currentLevel++;
+  if (currentLevel < levels.length) {
+    loadLevel(currentLevel);
+  } else {
+    addText('You Win!', { x: 5, y: 7, color: color`2` });
+  }
+}
+
+loadLevel(currentLevel);
 
 setSolids([tower, path, base]);
 
@@ -383,6 +438,26 @@ onInput("k", () => {
     setTimeout(() => {
       boostActive = false;
     }, boostCooldown); // Reset cooldown
+  }
+});
+
+// Special Ability: Boost Range
+const rangeBoostCooldown = 30000; // 30 seconds cooldown
+let rangeBoostActive = false;
+
+onInput("r", () => {
+  if (!rangeBoostActive) {
+    rangeBoostActive = true;
+    getAll(tower).forEach(t => {
+      t.range += 2; // Increase tower range
+    });
+
+    setTimeout(() => {
+      getAll(tower).forEach(t => {
+        t.range -= 2; // Reset tower range
+      });
+      rangeBoostActive = false;
+    }, 10000); // Boost lasts for 10 seconds
   }
 });
 
