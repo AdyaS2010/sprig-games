@@ -344,7 +344,7 @@ onInput("l", () => {
 // Enhanced Tower Upgrades
 const upgradeCosts = [50, 100, 150]; // Costs for each upgrade level
 
-onInput("u", () => {
+onInput("k", () => {
   const t = getFirst(tower);
   if (t && t.level < upgradeCosts.length && resources >= upgradeCosts[t.level]) {
     t.level = (t.level || 0) + 1; // Increment tower level
@@ -480,7 +480,7 @@ onInput("k", () => {
 const rangeBoostCooldown = 30000; // 30 seconds cooldown
 let rangeBoostActive = false;
 
-onInput("r", () => {
+onInput("i", () => {
   if (!rangeBoostActive) {
     rangeBoostActive = true;
     getAll(tower).forEach(t => {
@@ -713,7 +713,7 @@ onInput("k", () => {
 const rangeBoostCooldown = 30000; // 30 seconds cooldown
 let rangeBoostActive = false;
 
-onInput("r", () => {
+onInput("i", () => {
   if (!rangeBoostActive) {
     rangeBoostActive = true;
     getAll(tower).forEach(t => {
