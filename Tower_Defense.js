@@ -274,6 +274,7 @@ setInterval(() => {
   moveEnemies();
 }, 1000); // Move enemies every 1000ms
 
+// Tower Attacks with Animation
 setInterval(() => {
   getAll(tower).forEach(t => {
     const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
@@ -284,12 +285,12 @@ setInterval(() => {
         getTile(target.x, target.y).forEach(t => {
           if (t.type === projectile) t.remove();
         });
-      }, 1000); // Increase delay for projectile removal
+      }, 500); // Faster attack speed
     }
   });
-}, 2000); // Increase interval for tower attacks
+}, 1000); // Boost lasts for 10 seconds
 
-// Move Enemies Along the Path
+// Move Enemies with Animation
 function moveEnemies() {
   getAll(enemy).forEach(e => {
     const currentPos = { x: e.x, y: e.y };
@@ -306,7 +307,8 @@ function moveEnemies() {
 
 setInterval(() => {
   moveEnemies();
-}, 500); // Move enemies every 500ms
+}, 1000); // Move enemies every 1000ms
+
 
 // Tower Placement
 let resources = 100; // Starting resources
@@ -321,7 +323,7 @@ onInput("i", () => {
   }
 });
 
-// Tower Attacks
+// Tower Attacks with Animation
 setInterval(() => {
   getAll(tower).forEach(t => {
     const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
@@ -332,10 +334,29 @@ setInterval(() => {
         getTile(target.x, target.y).forEach(t => {
           if (t.type === projectile) t.remove();
         });
-      }, 500);
+      }, 500); // Faster attack speed
     }
   });
-}, 1000);
+}, 1000); // Boost lasts for 10 seconds
+
+// Move Enemies with Animation
+function moveEnemies() {
+  getAll(enemy).forEach(e => {
+    const currentPos = { x: e.x, y: e.y };
+    const nextPosIndex = pathCoordinates.findIndex(pos => pos.x === currentPos.x && pos.y === currentPos.y) + 1;
+    if (nextPosIndex < pathCoordinates.length) {
+      const nextPos = pathCoordinates[nextPosIndex];
+      e.x = nextPos.x;
+      e.y = nextPos.y;
+    } else {
+      e.remove(); // Remove enemy if it reaches the end of the path
+    }
+  });
+}
+
+setInterval(() => {
+  moveEnemies();
+}, 1000); // Move enemies every 1000ms
 
 // Special Ability: Boost Attack Speed
 const boostCooldown = 20000; // 20 seconds cooldown
@@ -378,6 +399,53 @@ afterInput(() => {
         enemyHealth = 3; // Reset health for next enemy
         resources += 10; // Earn resources for defeating an enemy
         addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+      }
+    });
+  });
+});
+
+// Sound Effects
+const placeTowerSound = new Audio('place_tower.mp3');
+const attackSound = new Audio('attack.mp3');
+const enemyDeathSound = new Audio('enemy_death.mp3');
+
+onInput("i", () => {
+  const p = getFirst(tower);
+  if (resources >= towerCost && getTile(p.x, p.y).every(t => t.type !== tower)) {
+    addSprite(p.x, p.y, tower);
+    resources -= towerCost;
+    addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+    placeTowerSound.play(); // Play sound effect for placing tower
+  }
+});
+
+setInterval(() => {
+  getAll(tower).forEach(t => {
+    const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
+    if (enemiesInRange.length > 0) {
+      const target = enemiesInRange[0];
+      addSprite(t.x, t.y, projectile);
+      attackSound.play(); // Play sound effect for attacking
+      setTimeout(() => {
+        getTile(target.x, target.y).forEach(t => {
+          if (t.type === projectile) t.remove();
+        });
+      }, 500);
+    }
+  });
+}, 2000);
+
+afterInput(() => {
+  getAll(projectile).forEach(p => {
+    const enemiesHit = getTile(p.x, p.y).filter(t => t.type === enemy || t.type === fastEnemy || t.type === armoredEnemy);
+    enemiesHit.forEach(e => {
+      enemyHealth -= 1;
+      if (enemyHealth <= 0) {
+        e.remove();
+        enemyHealth = 3; // Reset health for next enemy
+        resources += 10; // Earn resources for defeating an enemy
+        addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+        enemyDeathSound.play(); // Play sound effect for enemy death
       }
     });
   });
