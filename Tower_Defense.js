@@ -9,6 +9,8 @@ const tower = "t";
 const enemy = "e";
 const fastEnemy = "F";
 const armoredEnemy = "a";
+const healerEnemy = "h";
+const shieldedEnemy = "S";
 const path = "p";
 const base = "b";
 const projectile = "j";
@@ -115,6 +117,40 @@ setLegend(
 .....1111111....
 ................
 ................
+................
+................
+................`],
+  [healerEnemy, bitmap`
+................
+................
+................
+................
+................
+.....HHHHHH.....
+.....HHHHHH.....
+.....HHHHHH.....
+.....HHHHHH.....
+.....HHHHHH.....
+.....HHHHHH.....
+................
+................
+................
+................
+................`],
+  [shieldedEnemy, bitmap`
+.......FFF......
+.....FFF6FFF....
+.....F66666F....
+.....F66666F....
+....LLLLLLLLL...
+....L1111111L...
+....L1F111F1L...
+....L1111111L...
+....L1111111L...
+....L1C11111L...
+....L11CCC11L...
+....L1111111L...
+....LLLLLLLLL...
 ................
 ................
 ................`],
@@ -254,7 +290,8 @@ loadLevel(currentLevel);
 setSolids([tower, path, base]);
 
 // Tower Placement
-const upgradeCost = 50;
+// Enhanced Tower Upgrades
+const upgradeCost = [50, 100, 150]; // Costs for each upgrade level
 const fastTowerCost = 30;
 const strongTowerCost = 50;
 
@@ -276,13 +313,18 @@ const pathCoordinates = [
 ];
 
 // Set inputs
+// Enhanced Tower Upgrades
+const upgradeCosts = [50, 100, 150]; // Costs for each upgrade level
+
 onInput("i", () => {
   const t = getFirst(tower);
-  if (resources >= upgradeCost && t) {
+  if (t && t.level < upgradeCosts.length && resources >= upgradeCosts[t.level]) {
+    t.level = (t.level || 0) + 1; // Increment tower level
     t.range += 1; // Increase tower range
     t.damage += 1; // Increase tower damage
-    resources -= upgradeCost;
+    resources -= upgradeCosts[t.level - 1];
     addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+    addText(`Tower Upgraded to Level ${t.level}`, { x: 1, y: 3, color: color`2` });
   }
 });
 
@@ -308,11 +350,11 @@ onInput("l", () => {
 let wave = 0;
 let enemyCount = 5;
 
-// Spawn different enemy types
+// Spawn different enemy types with unique abilities
 function spawnEnemies() {
   for (let i = 0; i < enemyCount; i++) {
     if (getAll(enemy).length < 20) { // Cap the number of enemies
-      const enemyType = Math.random() < 0.5 ? fastEnemy : armoredEnemy;
+      const enemyType = Math.random() < 0.5 ? healerEnemy : shieldedEnemy;
       addSprite(0, 7, enemyType); // Spawn enemies at the start of the path
     }
   }
@@ -346,6 +388,7 @@ setInterval(() => {
 }, 1000); // Boost lasts for 10 seconds
 
 // Move Enemies with Animation
+// Implement unique abilities for enemies
 function moveEnemies() {
   getAll(enemy).forEach(e => {
     const currentPos = { x: e.x, y: e.y };
@@ -357,13 +400,23 @@ function moveEnemies() {
     } else {
       e.remove(); // Remove enemy if it reaches the end of the path
     }
+
+    // Unique abilities
+    if (e.type === healerEnemy) {
+      getAll(enemy).forEach(other => {
+        if (Math.abs(other.x - e.x) <= 1 && Math.abs(other.y - e.y) <= 1) {
+          other.health += 1; // Heal nearby enemies
+        }
+      });
+    } else if (e.type === shieldedEnemy) {
+      e.health += 1; // Increase health for shielded enemies
+    }
   });
 }
 
 setInterval(() => {
   moveEnemies();
 }, 1000); // Move enemies every 1000ms
-
 
 // Tower Placement
 let resources = 100; // Starting resources
@@ -573,3 +626,4 @@ afterInput(() => {
     gameOver();
   }
 });
+
