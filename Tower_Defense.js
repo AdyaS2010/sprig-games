@@ -584,11 +584,13 @@ afterInput(() => {
   });
 });
 
-// Achievements
+// Additional Achievements
 let achievements = {
   firstTower: false,
   firstKill: false,
-  wave10: false
+  wave10: false,
+  collectPowerUp: false,
+  upgradeTower: false
 };
 
 function checkAchievements() {
@@ -608,6 +610,18 @@ function checkAchievements() {
     achievements.wave10 = true;
     resources += 100; // Reward for reaching wave 10
     addText('Achievement: Wave 10!', { x: 1, y: 5, color: color`2` });
+  }
+
+  if (!achievements.collectPowerUp && getAll(powerUp).length === 0) {
+    achievements.collectPowerUp = true;
+    resources += 50; // Reward for collecting a power-up
+    addText('Achievement: Collect Power-Up!', { x: 1, y: 6, color: color`2` });
+  }
+
+  if (!achievements.upgradeTower && getAll(tower).some(t => t.level > 1)) {
+    achievements.upgradeTower = true;
+    resources += 50; // Reward for upgrading a tower
+    addText('Achievement: Upgrade Tower!', { x: 1, y: 7, color: color`2` });
   }
 }
 
@@ -645,6 +659,34 @@ setInterval(() => {
     }
   });
 }, 2000);
+
+// Enhanced Visual and Audio Effects
+const upgradeSound = new Audio('upgrade.mp3');
+const powerUpSound = new Audio('power_up.mp3');
+
+onInput("u", () => {
+  const t = getFirst(tower);
+  if (t && t.level < upgradeCosts.length && resources >= upgradeCosts[t.level]) {
+    t.level = (t.level || 0) + 1; // Increment tower level
+    t.range += 1; // Increase tower range
+    t.damage += 1; // Increase tower damage
+    resources -= upgradeCosts[t.level - 1];
+    addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+    addText(`Tower Upgraded to Level ${t.level}`, { x: 1, y: 3, color: color`2` });
+    upgradeSound.play(); // Play sound effect for upgrading tower
+  }
+});
+
+afterInput(() => {
+  getAll(powerUp).forEach(p => {
+    if (getTile(p.x, p.y).some(t => t.type === tower)) {
+      p.remove();
+      resources += 50; // Gain resources from power-up
+      addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+      powerUpSound.play(); // Play sound effect for collecting power-up
+    }
+  });
+});
 
 afterInput(() => {
   getAll(projectile).forEach(p => {
