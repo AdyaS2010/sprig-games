@@ -308,41 +308,18 @@ loadLevel(currentLevel);
 setSolids([tower, path, base]);
 
 // Tower Placement
-// Enhanced Tower Upgrades
-const upgradeCost = [50, 100, 150]; // Costs for each upgrade level
+const towerCost = 20;
 const fastTowerCost = 30;
 const strongTowerCost = 50;
+let resources = 100; // Starting resources
 
-// Define the path
-const pathCoordinates = [
-  {x: 0, y: 7}, {x: 1, y: 7}, {x: 2, y: 7}, {x: 3, y: 7},
-  {x: 3, y: 6}, {x: 3, y: 5}, {x: 3, y: 4}, {x: 3, y: 3},
-  {x: 3, y: 2}, {x: 4, y: 2}, {x: 5, y: 2}, {x: 6, y: 2},
-  {x: 6, y: 3}, {x: 6, y: 4}, {x: 6, y: 5}, {x: 6, y: 6},
-  {x: 6, y: 7}, {x: 6, y: 8}, {x: 6, y: 9}, {x: 6, y: 10},
-  {x: 5, y: 10}, {x: 4, y: 10}, {x: 3, y: 10}, {x: 3, y: 11},
-  {x: 3, y: 12}, {x: 3, y: 13}, {x: 4, y: 13}, {x: 5, y: 13}, 
-  {x: 6, y: 13}, {x: 7, y: 13}, {x: 8, y: 13}, {x: 9, y: 13},   
-  {x: 10, y: 13}, {x: 11, y: 13}, {x: 12, y: 13}, {x: 13, y: 13}, 
-  {x: 13, y: 12}, {x: 13, y: 11}, {x: 13, y: 10}, {x: 13, y: 9},  
-  {x: 13, y: 8}, {x: 12, y: 8}, {x: 11, y: 8}, {x: 11, y: 7},
-  {x: 11, y: 6}, {x: 11, y: 5}, {x: 11, y: 4}, {x: 11, y: 3},
-  {x: 12, y: 3}, {x: 13, y: 3}, {x: 14, y: 3}, {x: 15, y: 3} 
-];
-
-// Set inputs
-// Enhanced Tower Upgrades
-const upgradeCosts = [50, 100, 150]; // Costs for each upgrade level
-
-onInput("k", () => {
-  const t = getFirst(tower);
-  if (t && t.level < upgradeCosts.length && resources >= upgradeCosts[t.level]) {
-    t.level = (t.level || 0) + 1; // Increment tower level
-    t.range += 1; // Increase tower range
-    t.damage += 1; // Increase tower damage
-    resources -= upgradeCosts[t.level - 1];
+onInput("i", () => {
+  const p = getFirst(tower);
+  if (resources >= towerCost && getTile(p.x, p.y).every(t => t.type !== tower)) {
+    addSprite(p.x, p.y, tower);
+    resources -= towerCost;
     addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
-    addText(`Tower Upgraded to Level ${t.level}`, { x: 1, y: 3, color: color`2` });
+    placeTowerSound.play(); // Play sound effect for placing tower
   }
 });
 
@@ -364,16 +341,21 @@ onInput("l", () => {
   }
 });
 
-// Spawn power-ups randomly on the map
-function spawnPowerUps() {
-  const x = Math.floor(Math.random() * 16);
-  const y = Math.floor(Math.random() * 16);
-  addSprite(x, y, powerUp);
-}
+// Enhanced Tower Upgrades
+const upgradeCosts = [50, 100, 150]; // Costs for each upgrade level
 
-setInterval(() => {
-  spawnPowerUps();
-}, 20000); // Spawn a new power-up every 20 seconds
+onInput("u", () => {
+  const t = getFirst(tower);
+  if (t && t.level < upgradeCosts.length && resources >= upgradeCosts[t.level]) {
+    t.level = (t.level || 0) + 1; // Increment tower level
+    t.range += 1; // Increase tower range
+    t.damage += 1; // Increase tower damage
+    resources -= upgradeCosts[t.level - 1];
+    addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+    addText(`Tower Upgraded to Level ${t.level}`, { x: 1, y: 3, color: color`2` });
+    upgradeSound.play(); // Play sound effect for upgrading tower
+  }
+});
 
 // Collect power-ups
 afterInput(() => {
@@ -382,6 +364,7 @@ afterInput(() => {
       p.remove();
       resources += 50; // Gain resources from power-up
       addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+      powerUpSound.play(); // Play sound effect for collecting power-up
     }
   });
 });
@@ -406,29 +389,7 @@ setInterval(() => {
   spawnEnemies();
 }, 15000); // Spawn a new wave every 15 seconds
 
-// Adjust intervals for performance optimization
-setInterval(() => {
-  moveEnemies();
-}, 1000); // Move enemies every 1000ms
-
-// Tower Attacks with Animation
-setInterval(() => {
-  getAll(tower).forEach(t => {
-    const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
-    if (enemiesInRange.length > 0) {
-      const target = enemiesInRange[0];
-      addSprite(t.x, t.y, projectile);
-      setTimeout(() => {
-        getTile(target.x, target.y).forEach(t => {
-          if (t.type === projectile) t.remove();
-        });
-      }, 500); // Faster attack speed
-    }
-  });
-}, 1000); // Boost lasts for 10 seconds
-
 // Move Enemies with Animation
-// Implement unique abilities for enemies
 function moveEnemies() {
   getAll(enemy).forEach(e => {
     const currentPos = { x: e.x, y: e.y };
@@ -458,17 +419,207 @@ setInterval(() => {
   moveEnemies();
 }, 1000); // Move enemies every 1000ms
 
-// Tower Placement
-let resources = 100; // Starting resources
-const towerCost = 20; // Cost of each tower
+// Tower Attacks with Animation
+setInterval(() => {
+  getAll(tower).forEach(t => {
+    const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
+    if (enemiesInRange.length > 0) {
+      const target = enemiesInRange[0];
+      addSprite(t.x, t.y, projectile);
+      attackSound.play(); // Play sound effect for attacking
+      setTimeout(() => {
+        getTile(target.x, target.y).forEach(t => {
+          if (t.type === projectile) t.remove();
+        });
+      }, 500);
+    }
+  });
+}, 2000);
 
-onInput("i", () => {
-  const p = getFirst(tower);
-  if (resources >= towerCost && getTile(p.x, p.y).every(t => t.type !== tower)) {
-    addSprite(p.x, p.y, tower);
-    resources -= towerCost;
-    addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+// Dynamic Difficulty Adjustment
+function adjustDifficulty() {
+  if (wave % 5 === 0) {
+    enemyCount += 5; // Increase enemy count every 5 waves
+    enemyHealth += 1; // Increase enemy health every 5 waves
   }
+}
+
+setInterval(() => {
+  adjustDifficulty();
+}, 10000); // Adjust difficulty every 10 seconds
+
+// Special Ability: Boost Attack Speed
+const boostCooldown = 20000; // 20 seconds cooldown
+let boostActive = false;
+
+onInput("k", () => {
+  if (!boostActive) {
+    boostActive = true;
+    setInterval(() => {
+      getAll(tower).forEach(t => {
+        const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
+        if (enemiesInRange.length > 0) {
+          const target = enemiesInRange[0];
+          addSprite(t.x, t.y, projectile);
+          setTimeout(() => {
+            getTile(target.x, target.y).forEach(t => {
+              if (t.type === projectile) t.remove();
+            });
+          }, 500); // Faster attack speed
+        }
+      });
+    }, 1000); // Boost lasts for 10 seconds
+
+    setTimeout(() => {
+      boostActive = false;
+    }, boostCooldown); // Reset cooldown
+  }
+});
+
+// Special Ability: Boost Range
+const rangeBoostCooldown = 30000; // 30 seconds cooldown
+let rangeBoostActive = false;
+
+onInput("r", () => {
+  if (!rangeBoostActive) {
+    rangeBoostActive = true;
+    getAll(tower).forEach(t => {
+      t.range += 2; // Increase tower range
+    });
+
+    setTimeout(() => {
+      getAll(tower).forEach(t => {
+        t.range -= 2; // Reset tower range
+      });
+      rangeBoostActive = false;
+    }, 10000); // Boost lasts for 10 seconds
+  }
+});
+
+// Enemy Health and Damage
+let enemyHealth = 3;
+
+afterInput(() => {
+  getAll(projectile).forEach(p => {
+    const enemiesHit = getTile(p.x, p.y).filter(t => t.type === enemy || t.type === fastEnemy || t.type === armoredEnemy);
+    enemiesHit.forEach(e => {
+      enemyHealth -= 1;
+      if (enemyHealth <= 0) {
+        e.remove();
+        enemyHealth = 3; // Reset health for next enemy
+        resources += 10; // Earn resources for defeating an enemy
+        addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+        enemyDeathSound.play(); // Play sound effect for enemy death
+      }
+    });
+  });
+});
+
+// Additional Achievements
+let achievements = {
+  firstTower: false,
+  firstKill: false,
+  wave10: false,
+  collectPowerUp: false,
+  upgradeTower: false
+};
+
+function checkAchievements() {
+  if (!achievements.firstTower && getAll(tower).length > 0) {
+    achievements.firstTower = true;
+    resources += 50; // Reward for placing the first tower
+    addText('Achievement: First Tower!', { x: 1, y: 3, color: color`2` });
+  }
+
+  if (!achievements.firstKill && getAll(enemy).length === 0) {
+    achievements.firstKill = true;
+    resources += 50; // Reward for first kill
+    addText('Achievement: First Kill!', { x: 1, y: 4, color: color`2` });
+  }
+
+  if (!achievements.wave10 && wave >= 10) {
+    achievements.wave10 = true;
+    resources += 100; // Reward for reaching wave 10
+    addText('Achievement: Wave 10!', { x: 1, y: 5, color: color`2` });
+  }
+
+  if (!achievements.collectPowerUp && getAll(powerUp).length === 0) {
+    achievements.collectPowerUp = true;
+    resources += 50; // Reward for collecting a power-up
+    addText('Achievement: Collect Power-Up!', { x: 1, y: 6, color: color`2` });
+  }
+
+  if (!achievements.upgradeTower && getAll(tower).some(t => t.level > 1)) {
+    achievements.upgradeTower = true;
+    resources += 50; // Reward for upgrading a tower
+    addText('Achievement: Upgrade Tower!', { x: 1, y: 7, color: color`2` });
+  }
+}
+
+setInterval(() => {
+  checkAchievements();
+}, 1000); // Check achievements every second
+
+// Game Mechanics
+function gameOver() {
+  addText('Game Over', { x: 5, y: 7, color: color`2` });
+  setTimeout(() => {
+    level = 0;
+    resources = 100;
+    setMap(levels[level]);
+  }, 3000); // Restart game after 3 seconds
+}
+
+afterInput(() => {
+  const enemiesAtBase = getTile(14, 14).filter(t => t.type === enemy);
+  if (enemiesAtBase.length > 0) {
+    gameOver();
+  }
+});
+
+// Sound Effects
+const placeTowerSound = new Audio('place_tower.mp3');
+const attackSound = new Audio('attack.mp3');
+const enemyDeathSound = new Audio('enemy_death.mp3');
+
+// Game Mechanics
+function gameOver() {
+  addText('Game Over', { x: 5, y: 7, color: color`2` });
+  setTimeout(() => {
+    level = 0;
+    resources = 100;
+    setMap(levels[level]);
+  }, 3000); // Restart game after 3 seconds
+}
+
+afterInput(() => {
+  const enemiesAtBase = getTile(14, 14).filter(t => t.type === enemy);
+  if (enemiesAtBase.length > 0) {
+    gameOver();
+  }
+});
+
+// Spawn power-ups randomly on the map
+function spawnPowerUps() {
+  const x = Math.floor(Math.random() * 16);
+  const y = Math.floor(Math.random() * 16);
+  addSprite(x, y, powerUp);
+}
+
+setInterval(() => {
+  spawnPowerUps();
+}, 20000); // Spawn a new power-up every 20 seconds
+
+// Collect power-ups
+afterInput(() => {
+  getAll(powerUp).forEach(p => {
+    if (getTile(p.x, p.y).some(t => t.type === tower)) {
+      p.remove();
+      resources += 50; // Gain resources from power-up
+      addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+      powerUpSound.play(); // Play sound effect for collecting power-up
+    }
+  });
 });
 
 // Tower Attacks with Animation
@@ -478,14 +629,15 @@ setInterval(() => {
     if (enemiesInRange.length > 0) {
       const target = enemiesInRange[0];
       addSprite(t.x, t.y, projectile);
+      attackSound.play(); // Play sound effect for attacking
       setTimeout(() => {
         getTile(target.x, target.y).forEach(t => {
           if (t.type === projectile) t.remove();
         });
-      }, 500); // Faster attack speed
+      }, 500);
     }
   });
-}, 1000); // Boost lasts for 10 seconds
+}, 2000);
 
 // Move Enemies with Animation
 function moveEnemies() {
@@ -498,6 +650,17 @@ function moveEnemies() {
       e.y = nextPos.y;
     } else {
       e.remove(); // Remove enemy if it reaches the end of the path
+    }
+
+    // Unique abilities
+    if (e.type === healerEnemy) {
+      getAll(enemy).forEach(other => {
+        if (Math.abs(other.x - e.x) <= 1 && Math.abs(other.y - e.y) <= 1) {
+          other.health += 1; // Heal nearby enemies
+        }
+      });
+    } else if (e.type === shieldedEnemy) {
+      e.health += 1; // Increase health for shielded enemies
     }
   });
 }
@@ -579,6 +742,7 @@ afterInput(() => {
         enemyHealth = 3; // Reset health for next enemy
         resources += 10; // Earn resources for defeating an enemy
         addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+        enemyDeathSound.play(); // Play sound effect for enemy death
       }
     });
   });
@@ -628,81 +792,6 @@ function checkAchievements() {
 setInterval(() => {
   checkAchievements();
 }, 1000); // Check achievements every second
-
-// Sound Effects
-const placeTowerSound = new Audio('place_tower.mp3');
-const attackSound = new Audio('attack.mp3');
-const enemyDeathSound = new Audio('enemy_death.mp3');
-
-onInput("i", () => {
-  const p = getFirst(tower);
-  if (resources >= towerCost && getTile(p.x, p.y).every(t => t.type !== tower)) {
-    addSprite(p.x, p.y, tower);
-    resources -= towerCost;
-    addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
-    placeTowerSound.play(); // Play sound effect for placing tower
-  }
-});
-
-setInterval(() => {
-  getAll(tower).forEach(t => {
-    const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
-    if (enemiesInRange.length > 0) {
-      const target = enemiesInRange[0];
-      addSprite(t.x, t.y, projectile);
-      attackSound.play(); // Play sound effect for attacking
-      setTimeout(() => {
-        getTile(target.x, target.y).forEach(t => {
-          if (t.type === projectile) t.remove();
-        });
-      }, 500);
-    }
-  });
-}, 2000);
-
-// Enhanced Visual and Audio Effects
-const upgradeSound = new Audio('upgrade.mp3');
-const powerUpSound = new Audio('power_up.mp3');
-
-onInput("u", () => {
-  const t = getFirst(tower);
-  if (t && t.level < upgradeCosts.length && resources >= upgradeCosts[t.level]) {
-    t.level = (t.level || 0) + 1; // Increment tower level
-    t.range += 1; // Increase tower range
-    t.damage += 1; // Increase tower damage
-    resources -= upgradeCosts[t.level - 1];
-    addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
-    addText(`Tower Upgraded to Level ${t.level}`, { x: 1, y: 3, color: color`2` });
-    upgradeSound.play(); // Play sound effect for upgrading tower
-  }
-});
-
-afterInput(() => {
-  getAll(powerUp).forEach(p => {
-    if (getTile(p.x, p.y).some(t => t.type === tower)) {
-      p.remove();
-      resources += 50; // Gain resources from power-up
-      addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
-      powerUpSound.play(); // Play sound effect for collecting power-up
-    }
-  });
-});
-
-afterInput(() => {
-  getAll(projectile).forEach(p => {
-    const enemiesHit = getTile(p.x, p.y).filter(t => t.type === enemy || t.type === fastEnemy || t.type === armoredEnemy);
-    enemiesHit.forEach(e => {
-      enemyHealth -= 1;
-      if (enemyHealth <= 0) {
-        e.remove();
-        enemyHealth = 3; // Reset health for next enemy
-        resources += 10; // Earn resources for defeating an enemy
-        addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
-        enemyDeathSound.play(); // Play sound effect for enemy death
-      }
-    });
-  });
-});
 
 // Game Mechanics
 function gameOver() {
