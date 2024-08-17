@@ -11,6 +11,7 @@ const fastEnemy = "F";
 const armoredEnemy = "a";
 const healerEnemy = "h";
 const shieldedEnemy = "S";
+const powerUp = "P";
 const path = "p";
 const base = "b";
 const projectile = "j";
@@ -152,6 +153,23 @@ setLegend(
 ....L1111111L...
 ....LLLLLLLLL...
 ................
+................
+................`],
+  [powerUp, bitmap`
+................
+................
+................
+.....6677.......
+.....7767.......
+.......76.......
+.....7776.......
+.....7667.......
+.....7677.......
+.....667........
+.....677........
+.....6677.......
+......7677......
+......7766......
 ................
 ................`],
   [path, bitmap`
@@ -316,7 +334,7 @@ const pathCoordinates = [
 // Enhanced Tower Upgrades
 const upgradeCosts = [50, 100, 150]; // Costs for each upgrade level
 
-onInput("i", () => {
+onInput("k", () => {
   const t = getFirst(tower);
   if (t && t.level < upgradeCosts.length && resources >= upgradeCosts[t.level]) {
     t.level = (t.level || 0) + 1; // Increment tower level
@@ -344,6 +362,28 @@ onInput("l", () => {
     resources -= strongTowerCost;
     addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
   }
+});
+
+// Spawn power-ups randomly on the map
+function spawnPowerUps() {
+  const x = Math.floor(Math.random() * 16);
+  const y = Math.floor(Math.random() * 16);
+  addSprite(x, y, powerUp);
+}
+
+setInterval(() => {
+  spawnPowerUps();
+}, 20000); // Spawn a new power-up every 20 seconds
+
+// Collect power-ups
+afterInput(() => {
+  getAll(powerUp).forEach(p => {
+    if (getTile(p.x, p.y).some(t => t.type === tower)) {
+      p.remove();
+      resources += 50; // Gain resources from power-up
+      addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
+    }
+  });
 });
 
 // Enemy Waves
@@ -465,6 +505,18 @@ function moveEnemies() {
 setInterval(() => {
   moveEnemies();
 }, 1000); // Move enemies every 1000ms
+
+// Dynamic Difficulty Adjustment
+function adjustDifficulty() {
+  if (wave % 5 === 0) {
+    enemyCount += 5; // Increase enemy count every 5 waves
+    enemyHealth += 1; // Increase enemy health every 5 waves
+  }
+}
+
+setInterval(() => {
+  adjustDifficulty();
+}, 10000); // Adjust difficulty every 10 seconds
 
 // Special Ability: Boost Attack Speed
 const boostCooldown = 20000; // 20 seconds cooldown
@@ -626,4 +678,3 @@ afterInput(() => {
     gameOver();
   }
 });
-
