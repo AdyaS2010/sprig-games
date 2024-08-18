@@ -281,9 +281,7 @@ bbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbb`
 ];
 
-let currentLevel = 0;
-
-const currentLevel = levels[level];
+let currentLevel = levels[level];
 setMap(currentLevel);
 
 function loadLevel(level) {
@@ -436,49 +434,6 @@ setInterval(() => {
   });
 }, 2000);
 
-// Dynamic Difficulty Adjustment
-function adjustDifficulty() {
-  if (wave % 5 === 0) {
-    enemyCount += 5; // Increase enemy count every 5 waves
-    enemyHealth += 1; // Increase enemy health every 5 waves
-  }
-}
-
-setInterval(() => {
-  adjustDifficulty();
-}, 10000); // Adjust difficulty every 10 seconds
-
-// Special Ability: Boost Attack Speed
-const boostCooldown = 20000; // 20 seconds cooldown
-let boostActive = false;
-
-onInput("k", () => {
-  if (!boostActive) {
-    boostActive = true;
-    setInterval(() => {
-      getAll(tower).forEach(t => {
-        const enemiesInRange = getAll(enemy).filter(e => Math.abs(e.x - t.x) <= 3 && Math.abs(e.y - t.y) <= 3);
-        if (enemiesInRange.length > 0) {
-          const target = enemiesInRange[0];
-          addSprite(t.x, t.y, projectile);
-          setTimeout(() => {
-            getTile(target.x, target.y).forEach(t => {
-              if (t.type === projectile) t.remove();
-            });
-          }, 500); // Faster attack speed
-        }
-      });
-    }, 1000); // Boost lasts for 10 seconds
-
-    setTimeout(() => {
-      boostActive = false;
-    }, boostCooldown); // Reset cooldown
-  }
-});
-
-// Special Ability: Boost Range
-const rangeBoostCooldown = 30000; // 30 seconds cooldown
-let rangeBoostActive = false;
 
 onInput("i", () => {
   if (!rangeBoostActive) {
@@ -560,44 +515,10 @@ setInterval(() => {
   checkAchievements();
 }, 1000); // Check achievements every second
 
-// Game Mechanics
-function gameOver() {
-  addText('Game Over', { x: 5, y: 7, color: color`2` });
-  setTimeout(() => {
-    level = 0;
-    resources = 100;
-    setMap(levels[level]);
-  }, 3000); // Restart game after 3 seconds
-}
-
-afterInput(() => {
-  const enemiesAtBase = getTile(14, 14).filter(t => t.type === enemy);
-  if (enemiesAtBase.length > 0) {
-    gameOver();
-  }
-});
-
 // Sound Effects
 const placeTowerSound = new Audio('place_tower.mp3');
 const attackSound = new Audio('attack.mp3');
-const enemyDeathSound = new Audio('enemy_death.mp3');
-
-// Game Mechanics
-function gameOver() {
-  addText('Game Over', { x: 5, y: 7, color: color`2` });
-  setTimeout(() => {
-    level = 0;
-    resources = 100;
-    setMap(levels[level]);
-  }, 3000); // Restart game after 3 seconds
-}
-
-afterInput(() => {
-  const enemiesAtBase = getTile(14, 14).filter(t => t.type === enemy);
-  if (enemiesAtBase.length > 0) {
-    gameOver();
-  }
-});
+const enemyDeathSound = new Audio('enemy_death.mp3')
 
 // Spawn power-ups randomly on the map
 function spawnPowerUps() {
@@ -638,36 +559,6 @@ setInterval(() => {
     }
   });
 }, 2000);
-
-// Move Enemies with Animation
-function moveEnemies() {
-  getAll(enemy).forEach(e => {
-    const currentPos = { x: e.x, y: e.y };
-    const nextPosIndex = pathCoordinates.findIndex(pos => pos.x === currentPos.x && pos.y === currentPos.y) + 1;
-    if (nextPosIndex < pathCoordinates.length) {
-      const nextPos = pathCoordinates[nextPosIndex];
-      e.x = nextPos.x;
-      e.y = nextPos.y;
-    } else {
-      e.remove(); // Remove enemy if it reaches the end of the path
-    }
-
-    // Unique abilities
-    if (e.type === healerEnemy) {
-      getAll(enemy).forEach(other => {
-        if (Math.abs(other.x - e.x) <= 1 && Math.abs(other.y - e.y) <= 1) {
-          other.health += 1; // Heal nearby enemies
-        }
-      });
-    } else if (e.type === shieldedEnemy) {
-      e.health += 1; // Increase health for shielded enemies
-    }
-  });
-}
-
-setInterval(() => {
-  moveEnemies();
-}, 1000); // Move enemies every 1000ms
 
 // Dynamic Difficulty Adjustment
 function adjustDifficulty() {
