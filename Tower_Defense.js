@@ -226,6 +226,9 @@ DDDDDDDDDDDDDDD4`],
 );
 
 let level = 0;
+let wave = 0;
+let enemyCount = 0;
+let resources = 0;
 
 const levels = [
   map`
@@ -281,8 +284,7 @@ bbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbb`
 ];
 
-let currentLevel = levels[level];
-setMap(currentLevel);
+let currentLevel = 0;
 
 function loadLevel(level) {
   setMap(levels[level]);
@@ -433,87 +435,6 @@ setInterval(() => {
     }
   });
 }, 2000);
-
-
-onInput("i", () => {
-  if (!rangeBoostActive) {
-    rangeBoostActive = true;
-    getAll(tower).forEach(t => {
-      t.range += 2; // Increase tower range
-    });
-
-    setTimeout(() => {
-      getAll(tower).forEach(t => {
-        t.range -= 2; // Reset tower range
-      });
-      rangeBoostActive = false;
-    }, 10000); // Boost lasts for 10 seconds
-  }
-});
-
-// Enemy Health and Damage
-let enemyHealth = 3;
-
-afterInput(() => {
-  getAll(projectile).forEach(p => {
-    const enemiesHit = getTile(p.x, p.y).filter(t => t.type === enemy || t.type === fastEnemy || t.type === armoredEnemy);
-    enemiesHit.forEach(e => {
-      enemyHealth -= 1;
-      if (enemyHealth <= 0) {
-        e.remove();
-        enemyHealth = 3; // Reset health for next enemy
-        resources += 10; // Earn resources for defeating an enemy
-        addText(`Resources: ${resources}`, { x: 1, y: 2, color: color`3` });
-        enemyDeathSound.play(); // Play sound effect for enemy death
-      }
-    });
-  });
-});
-
-// Additional Achievements
-let achievements = {
-  firstTower: false,
-  firstKill: false,
-  wave10: false,
-  collectPowerUp: false,
-  upgradeTower: false
-};
-
-function checkAchievements() {
-  if (!achievements.firstTower && getAll(tower).length > 0) {
-    achievements.firstTower = true;
-    resources += 50; // Reward for placing the first tower
-    addText('Achievement: First Tower!', { x: 1, y: 3, color: color`2` });
-  }
-
-  if (!achievements.firstKill && getAll(enemy).length === 0) {
-    achievements.firstKill = true;
-    resources += 50; // Reward for first kill
-    addText('Achievement: First Kill!', { x: 1, y: 4, color: color`2` });
-  }
-
-  if (!achievements.wave10 && wave >= 10) {
-    achievements.wave10 = true;
-    resources += 100; // Reward for reaching wave 10
-    addText('Achievement: Wave 10!', { x: 1, y: 5, color: color`2` });
-  }
-
-  if (!achievements.collectPowerUp && getAll(powerUp).length === 0) {
-    achievements.collectPowerUp = true;
-    resources += 50; // Reward for collecting a power-up
-    addText('Achievement: Collect Power-Up!', { x: 1, y: 6, color: color`2` });
-  }
-
-  if (!achievements.upgradeTower && getAll(tower).some(t => t.level > 1)) {
-    achievements.upgradeTower = true;
-    resources += 50; // Reward for upgrading a tower
-    addText('Achievement: Upgrade Tower!', { x: 1, y: 7, color: color`2` });
-  }
-}
-
-setInterval(() => {
-  checkAchievements();
-}, 1000); // Check achievements every second
 
 // Sound Effects
 const placeTowerSound = new Audio('place_tower.mp3');
