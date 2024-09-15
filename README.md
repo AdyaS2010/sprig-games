@@ -4,6 +4,12 @@
 
 Welcome to the Tower Defense Game! This game is developed using Sprig and involves strategically placing towers to defend your base from waves of enemies. The game features various types of towers and enemies, power-ups, upgrades, and special abilities to enhance the gameplay experience.
 
+### Link
+https://sprig.hackclub.com/share/lDc9ktzp0ODrduXSYNpl 
+
+![image](https://github.com/user-attachments/assets/0b2042d2-895e-44c3-ad6c-2fbea0366f9c)
+*Here you can see the 'enemy waves', and using the key (options) can select powerups, boosters, and more as you progress while playing the game!*
+
 ## Features
 
 - **Multiple Tower Types**: 
@@ -77,5 +83,5 @@ Welcome to the Tower Defense Game! This game is developed using Sprig and involv
 - **Author**: Adya
 - **Date Added**: August 15, 2024
 
-Enjoy playing my Tower Defense Game (version1) and defending your base from waves of enemies! 
+Enjoy playing my Tower Defense Game (version/part 1) and defending your base from waves of enemies! 
 Have Fun! 🎮🚀
